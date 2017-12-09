@@ -12,8 +12,6 @@ we use [issue](https://github.com/CSID-DGU/2017-2-CECD-Tres-5/issues) tap.
 
 ### TestPrameters
 
-app to Test & get Logs about ARKit, Core Location, Core Motion ... etc
-
 ### Resource
 
-3D Model files.
+### AnchorExample-171208
