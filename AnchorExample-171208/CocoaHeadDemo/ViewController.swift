@@ -20,6 +20,9 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
     var detectedDataAnchor: ARAnchor?
     var processing = false
     
+    var nodeModel:SCNNode!
+    let nodeName = "Bolt.001_Material.001"
+    
     // MARK: - View Setup
     
     override func viewDidLoad() {
@@ -33,6 +36,19 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
         
         // Show statistics such as fps and timing information
         sceneView.showsStatistics = true
+        
+        // h529 : show virtual coordinate
+        sceneView.debugOptions = ARSCNDebugOptions.showWorldOrigin
+        
+        // h529 : better rendering option
+        sceneView.antialiasingMode = .multisampling4X
+        sceneView.automaticallyUpdatesLighting = true
+        
+        // h529 : create scene
+        let scene = SCNScene()
+        sceneView.scene = scene
+        let modelScene = SCNScene(named: "StopSign.scn", inDirectory: "Models.scnassets/StopSign")!
+        self.nodeModel =  modelScene.rootNode.childNode(withName: nodeName, recursively: true)
     }
     
     override func viewWillAppear(_ animated: Bool) {
@@ -133,30 +149,91 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
     
     // MARK: - ARSCNViewDelegate
     
-    func renderer(_ renderer: SCNSceneRenderer, nodeFor anchor: ARAnchor) -> SCNNode? {
+    func renderer(_ renderer: SCNSceneRenderer, didAdd node: SCNNode, for anchor: ARAnchor) {
+        if !anchor.isKind(of: ARPlaneAnchor.self) {
+            DispatchQueue.main.async {
+                if self.nodeModel != nil {
+                    let modelClone = self.nodeModel.clone()
+                    modelClone.position = SCNVector3Zero
+                    
+                    // Add model as a child of the node
+                    node.addChildNode(modelClone)
+                }
+            }
+        }
+    }
+    
+//    func renderer(_ renderer: SCNSceneRenderer, nodeFor anchor: ARAnchor) -> SCNNode? {
+//
+//        // If this is our anchor, create a node
+//        if self.detectedDataAnchor?.identifier == anchor.identifier {
+//
+//            // Create a 3D Cup to display
+//            guard let virtualObjectScene = SCNScene(named: "StopSign.scn", inDirectory: "Models.scnassets/StopSign") else {
+//                return nil
+//            }
+//
+//            let wrapperNode = SCNNode()
+//
+//            for child in virtualObjectScene.rootNode.childNodes {
+//                child.geometry?.firstMaterial?.lightingModel = .physicallyBased
+//                child.movabilityHint = .movable
+//                wrapperNode.addChildNode(child)
+//            }
+//
+//            // Set its position based off the anchor
+//            wrapperNode.transform = SCNMatrix4(anchor.transform)
+//
+//            return wrapperNode
+//        }
+//
+//        return nil
+//    }
+    
+    // MARK : - TOUCH
+    
+    
+    override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
         
-        // If this is our anchor, create a node
-        if self.detectedDataAnchor?.identifier == anchor.identifier {
-            
-            // Create a 3D Cup to display
-            guard let virtualObjectScene = SCNScene(named: "StopSign.scn", inDirectory: "Models.scnassets/stop") else {
-                return nil
+        let location = touches.first!.location(in: sceneView)
+        
+        // Let's test if a 3D Object was touch
+        var hitTestOptions = [SCNHitTestOption: Any]()
+        hitTestOptions[SCNHitTestOption.boundingBoxOnly] = true
+        
+        let hitResults: [SCNHitTestResult]  = sceneView.hitTest(location, options: hitTestOptions)
+        
+        if let hit = hitResults.first {
+            if let node = getParent(hit.node) {
+                node.removeFromParentNode()
+                return
             }
-            
-            let wrapperNode = SCNNode()
-            
-            for child in virtualObjectScene.rootNode.childNodes {
-                child.geometry?.firstMaterial?.lightingModel = .physicallyBased
-                child.movabilityHint = .movable
-                wrapperNode.addChildNode(child)
-            }
-            
-            // Set its position based off the anchor
-            wrapperNode.transform = SCNMatrix4(anchor.transform)
-            
-            return wrapperNode
         }
         
+        // No object was touch? Try feature points
+        let hitResultsFeaturePoints: [ARHitTestResult]  = sceneView.hitTest(location, types: .featurePoint)
+        
+        if let hit = hitResultsFeaturePoints.first {
+            
+            // Get the rotation matrix of the camera
+            let rotate = simd_float4x4(SCNMatrix4MakeRotation(sceneView.session.currentFrame!.camera.eulerAngles.y, 0, 1, 0))
+            
+            // Combine the matrices
+            let finalTransform = simd_mul(hit.worldTransform, rotate)
+            sceneView.session.add(anchor: ARAnchor(transform: finalTransform))
+            //sceneView.session.add(anchor: ARAnchor(transform: hit.worldTransform))
+        }
+    }
+    
+    func getParent(_ nodeFound: SCNNode?) -> SCNNode? {
+        if let node = nodeFound {
+            if node.name == nodeName {
+                return node
+            } else if let parent = node.parent {
+                return getParent(parent)
+            }
+        }
         return nil
     }
+    
 }
