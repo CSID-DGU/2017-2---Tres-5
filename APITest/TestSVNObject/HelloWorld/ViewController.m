@@ -31,10 +31,8 @@
     
     
     // h529 : add Honoka
-    SCNNode *node = [scene.rootNode childNodeWithName:@"__socks_0_2_1_1" recursively:NO];
-    
     SCNVector4 vec4_rot = SCNVector4Make(0, 1.0f, 0, M_PI/2);
-    SCNVector3 vec3_scl = SCNVector3Make(0.15f, 0.15f, 0.15f);
+    SCNVector3 vec3_scl = SCNVector3Make(0.025f, 0.025f, 0.025f);
     SCNMatrix4 mat4_translation = SCNMatrix4MakeTranslation(0.0f, -0.5f, -1.0f);
     SCNVector4 vec4_rot2 = SCNVector4Make(0, 1.0f, 0, -M_PI / 8);
     

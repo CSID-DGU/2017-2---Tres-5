@@ -139,7 +139,7 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
         if self.detectedDataAnchor?.identifier == anchor.identifier {
             
             // Create a 3D Cup to display
-            guard let virtualObjectScene = SCNScene(named: "cup.scn", inDirectory: "Models.scnassets/cup") else {
+            guard let virtualObjectScene = SCNScene(named: "StopSign.scn", inDirectory: "Models.scnassets/stop") else {
                 return nil
             }
             
