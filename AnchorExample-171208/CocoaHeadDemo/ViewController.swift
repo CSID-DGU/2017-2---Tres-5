@@ -17,6 +17,9 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
     
     @IBOutlet var sceneView: ARSCNView!
     
+    var reAnchor:matrix_float4x4!
+    var rePositioning = false
+    
     var detectedDataAnchor: ARAnchor?
     var processing = false
     
@@ -112,11 +115,20 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
                             let node = self.sceneView.node(for: detectedDataAnchor) {
                                 
                                 node.transform = SCNMatrix4(hitTestResult.worldTransform)
+                                //self.reAnchor = ARAnchor(transform: hitTestResult.worldTransform).transform
+                                self.reAnchor = hitTestResult.worldTransform
+                            
+                            
                             
                         } else {
                             // Create an anchor. The node will be created in delegate methods
                             self.detectedDataAnchor = ARAnchor(transform: hitTestResult.worldTransform)
                             self.sceneView.session.add(anchor: self.detectedDataAnchor!)
+                            
+                            print("=====================================================")
+                            print(hitTestResult.worldTransform) // this is mat4 about relative position from origin
+                            self.reAnchor = hitTestResult.worldTransform
+                            print("=====================================================")
                         }
                     }
                     
@@ -145,6 +157,25 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
                 
             }
         }
+        
+        if self.reAnchor != nil {
+            if self.rePositioning == false {
+                self.rePositioning = true
+                print("=====================================================")
+                print("Reset Position")
+                print("Move all to ", self.reAnchor)
+                print("=====================================================")
+
+                let wrapperNode = self.sceneView.scene.rootNode.childNodes
+                //(withName: nodeName, recursively: true)
+                
+                for cn in wrapperNode {
+                    //cn.transform = SCNMatrix4(self.reAnchor) // 전부 따라 움직이는 예제
+                    cn.localTranslate(by: SCNVector3(SCNMatrix4(self.reAnchor).m41, SCNMatrix4(self.reAnchor).m42, SCNMatrix4(self.reAnchor).m43))
+                }
+            }
+        }
+        
     }
     
     // MARK: - ARSCNViewDelegate
@@ -158,10 +189,15 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
                     
                     // Add model as a child of the node
                     node.addChildNode(modelClone)
+                 
+                    // it's same.
+//                    print(node.worldTransform)
+//                    print(anchor.transform)
                 }
             }
         }
     }
+    
     
 //    func renderer(_ renderer: SCNSceneRenderer, nodeFor anchor: ARAnchor) -> SCNNode? {
 //
