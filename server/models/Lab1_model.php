@@ -6,7 +6,7 @@ class Lab1_model extends CI_Model {
 
         public function get_last_entries()
         {
-                $query = $this->db->get('lab1', 100);
+                $query = $this->db->get('lab1', 500);
                 return $query->result();
         }
 

@@ -47,10 +47,6 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
         scnView.antialiasingMode = .multisampling4X
         scnView.automaticallyUpdatesLighting = true
         
-        // config ARWorld
-        let configuration = ARWorldTrackingConfiguration()
-        configuration.planeDetection = .horizontal
-        
         // set column material
         let colors = [UIColor.green, // front
             UIColor.red, // right
@@ -67,6 +63,7 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
         columnBox.materials = sideMaterials
         
         // create corner column
+        // for measuring distance
         let sizeSpace = Double(10)
         let sizeSpaceF = sizeSpace / 2.0
         let sizeSpaceB = sizeSpace / 2.0 * (-1.0)
@@ -81,6 +78,8 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
         scnView.scene.rootNode.addChildNode(cornerNode.clone())
         
         // scnView session run
+        let configuration = ARWorldTrackingConfiguration()
+        configuration.planeDetection = .horizontal
         scnView.session.run(configuration)
         
         // init param
@@ -189,53 +188,62 @@ class ViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate {
                                    SCNMatrix4(self.reAnchor).m43))
                 }
             }
+            
+            // Disable plane detection after the model has been added & reAnchor
+            let configuration = ARWorldTrackingConfiguration()
+            configuration.planeDetection = .horizontal
+            scnView.session.run(configuration, options: [])
         }
         
         // debug screen
         var dbg = String("Debug \n")
-        if self.rePositioning
-        {
-            // this param is not yet!
-            posX = frame.camera.transform[0][0]
-            posY = frame.camera.transform[0][1]
-            posZ = frame.camera.transform[0][2]
+        
+        var posDeviceMat4 = scnView.session.currentFrame!.camera.transform
+        
+        if self.rePositioning {
+            posDeviceMat4 = self.reAnchor - scnView.session.currentFrame!.camera.transform
         }
-        /*
+        
+        posX = posDeviceMat4.columns.3.x
+        posY = posDeviceMat4.columns.3.y
+        posZ = posDeviceMat4.columns.3.z
+        
         dbg += String(posX) + "\n"
         dbg += String(posY) + "\n"
         dbg += String(posZ) + "\n"
-        */
-        dbg += "[0][n]\n"
-        dbg += String(frame.camera.transform[0][0]) + "\n"
-        dbg += String(frame.camera.transform[0][1]) + "\n"
-        dbg += String(frame.camera.transform[0][2]) + "\n"
-        dbg += String(frame.camera.transform[0][3]) + "\n"
         
-        dbg += "[1][n]\n"
-        dbg += String(frame.camera.transform[1][0]) + "\n"
-        dbg += String(frame.camera.transform[1][1]) + "\n"
-        dbg += String(frame.camera.transform[1][2]) + "\n"
-        dbg += String(frame.camera.transform[1][3]) + "\n"
+//        dbg += "[0][n]\n"
+//        dbg += String(frame.camera.transform[0][0]) + "\n"
+//        dbg += String(frame.camera.transform[0][1]) + "\n"
+//        dbg += String(frame.camera.transform[0][2]) + "\n"
+//        dbg += String(frame.camera.transform[0][3]) + "\n"
+//
+//        dbg += "[1][n]\n"
+//        dbg += String(frame.camera.transform[1][0]) + "\n"
+//        dbg += String(frame.camera.transform[1][1]) + "\n"
+//        dbg += String(frame.camera.transform[1][2]) + "\n"
+//        dbg += String(frame.camera.transform[1][3]) + "\n"
+//
+//        dbg += "[2][n]\n"
+//        dbg += String(frame.camera.transform[2][0]) + "\n"
+//        dbg += String(frame.camera.transform[2][1]) + "\n"
+//        dbg += String(frame.camera.transform[2][2]) + "\n"
+//        dbg += String(frame.camera.transform[2][3]) + "\n"
+//
+//        dbg += "[3][n]\n"
+//        dbg += String(frame.camera.transform[3][0]) + "\n"
+//        dbg += String(frame.camera.transform[3][1]) + "\n"
+//        dbg += String(frame.camera.transform[3][2]) + "\n"
+//        dbg += String(frame.camera.transform[3][3]) + "\n"
+//
+//        if !self.rePositioning
+//        {
+//            dbg += "\n"
+//            dbg += "NOT SYNC" + "\n"
+//            dbg += "NOT SYNC" + "\n"
+//            dbg += "NOT SYNC" + "\n"
+//        }
         
-        dbg += "[2][n]\n"
-        dbg += String(frame.camera.transform[2][0]) + "\n"
-        dbg += String(frame.camera.transform[2][1]) + "\n"
-        dbg += String(frame.camera.transform[2][2]) + "\n"
-        dbg += String(frame.camera.transform[2][3]) + "\n"
-        
-        dbg += "[3][n]\n"
-        dbg += String(frame.camera.transform[3][0]) + "\n"
-        dbg += String(frame.camera.transform[3][1]) + "\n"
-        dbg += String(frame.camera.transform[3][2]) + "\n"
-        dbg += String(frame.camera.transform[3][3]) + "\n"
-        
-        if !self.rePositioning
-        {
-            dbg += "\n"
-            dbg += "NOT SYNC" + "\n"
-            dbg += "NOT SYNC" + "\n"
-            dbg += "NOT SYNC" + "\n"
-        }
         debugBox.text = dbg
     }
     
